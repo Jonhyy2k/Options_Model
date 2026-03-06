@@ -1,0 +1,2 @@
+[console_scripts]
+options-pricing = options_pricing.cli:main

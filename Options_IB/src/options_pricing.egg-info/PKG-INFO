@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: options-pricing
+Version: 0.1.0
+Summary: Options pricing with Bayesian Model Averaging and risk-neutral density extraction
+Requires-Python: >=3.10
+Requires-Dist: ib_insync>=0.9.86
+Requires-Dist: numpy>=1.24
+Requires-Dist: scipy>=1.11
+Requires-Dist: matplotlib>=3.7
+Requires-Dist: pandas>=2.0
