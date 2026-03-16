@@ -70,13 +70,19 @@ Each model returns:
 - **Residual SSE** — how well the model fits. This score is what determines the model's weight.
 
 ### Stage 4 — Bayesian Model Averaging (BMA)
-Each model gets a weight inversely proportional to its calibration error — better fit = higher weight. Weights are normalized to sum to 1. For any strike, the BMA price is:
+We approximate each model's posterior probability using a BIC/Laplace approximation to the marginal likelihood:
+
+```
+P(M_j | D) ∝ exp(-0.5 * BIC_j)
+```
+
+with equal prior model probabilities. This is a practical form of Bayesian model averaging because it rewards fit while penalizing extra parameters. For any strike, the averaged price is:
 
 ```
 BMA_price(K) = w_bsm * BSM(K) + w_crr * CRR(K) + w_merton * Merton(K) + w_heston * Heston(K)
 ```
 
-This is the key step that makes OptiQ more than just "we ran Black-Scholes." BMA automatically adapts: if the market is pricing in jump risk, Merton gets upweighted. If stochastic vol dominates, Heston leads. If the market is well-behaved, BSM and CRR contribute equally.
+This is the key step that makes OptiQ more than just "we ran Black-Scholes." The weights adapt to the data, but not by fit alone: a more complex model has to earn its extra flexibility. If the market is well-behaved, BSM/CRR can dominate; if jump or stochastic-vol structure is clearly present, Merton/Heston gain posterior weight.
 
 ### Stage 5 — Breeden-Litzenberger Extraction
 Takes the BMA call price curve C(K) across strikes and computes its second derivative:
@@ -108,7 +114,7 @@ The most important output. Shows the market's implied probability distribution f
 - **Orange dashed line** — risk-neutral mean. The market's expected value for the stock at expiry (typically very close to spot * e^(rT) in efficient markets).
 - **Green solid line** — your DCF price target.
 - **Green shaded area** — the probability mass beyond your target. This is the key number: if you say the stock is worth $620 and the market says there's only a 10% chance of that, either you're wrong or there's alpha.
-- **BMA weights box** (top left) — shows how much each model contributed to the blend.
+- **Model weights box** (top left) — shows how much each model contributed to the blend.
 
 **How to read it in a pitch:** "The distribution peaks near the current price, confirming the market sees this as range-bound. Our target sits in the right tail with only X% probability — the market hasn't priced in our catalyst."
 

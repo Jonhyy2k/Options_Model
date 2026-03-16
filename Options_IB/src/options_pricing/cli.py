@@ -9,7 +9,7 @@ import numpy as np
 
 from options_pricing.data import pull, load_snapshot, save_snapshot
 from options_pricing.calibration import calibrate_all
-from options_pricing.averaging import average
+from options_pricing.averaging import average, DEFAULT_WEIGHTING_METHOD
 from options_pricing.density import extract_density
 from options_pricing.visualization import generate_all
 from options_pricing.report import write_report
@@ -53,13 +53,21 @@ def _run_single_expiry(snap, args, run_dir):
     print()
 
     # Stage 4: Model averaging
-    print("[4/6] Computing BMA weights and averaged prices...")
+    print("[4/6] Computing model weights and averaged prices...")
     df = snap.chains
     avg = average(
         cal_results,
         strikes=df["strike"].values,
         rights=df["right"].values,
+        weighting_method=args.weighting_method,
     )
+    if avg.weighting_method == "bic":
+        method_desc = "BIC posterior approximation"
+    elif avg.weighting_method == "aic":
+        method_desc = "AIC weights"
+    else:
+        method_desc = "inverse SSE"
+    print(f"  Weighting method: {method_desc}")
     for name, w in sorted(avg.weights.items(), key=lambda x: -x[1]):
         print(f"  {name}: {w:.1%}")
     print()
@@ -117,6 +125,12 @@ def main(argv: list[str] | None = None) -> None:
                        help="Directory for all output files (default: output/)")
     run_p.add_argument("--maxiter", type=int, default=300,
                        help="Max iterations for differential evolution")
+    run_p.add_argument(
+        "--weighting-method",
+        choices=["bic", "aic", "inverse_sse"],
+        default=DEFAULT_WEIGHTING_METHOD,
+        help="Model averaging rule (default: %(default)s)",
+    )
     run_p.add_argument("--dte-targets", type=str, default=None,
                        help="Comma-separated DTE targets for multi-horizon analysis "
                             "(e.g., 30,60,90,180). Overrides --dte-low/--dte-high.")

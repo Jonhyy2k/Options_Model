@@ -167,7 +167,7 @@ def plot_density(
     ax.set_ylim(bottom=0)
 
     if weights:
-        weight_text = "BMA Weights\n" + "\n".join(
+        weight_text = "Model Weights\n" + "\n".join(
             f"  {name}: {w:.1%}" for name, w in
             sorted(weights.items(), key=lambda x: -x[1])
         )
